@@ -354,5 +354,61 @@
   <p style="margin-top: 10px; font-size: 12px; color: #999;">&copy; 2026 The Children's Guild. All rights reserved.</p>
 </div>
 
+
+<script>
+(function () {
+  "use strict";
+  var ENDPOINT = "https://defaulta074af5d321f4e67a992697496183a.46.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/31/workflows/13a2eb9350354482bde080e11206ef01/triggers/When_the_opt_in_form_is_submitted/paths/invoke?api-version=1&sp=%2Ftriggers%2FWhen_the_opt_in_form_is_submitted%2Frun&sv=1.0&sig=Fmq2m52bWyubdX-AsKeaXYUPDmQIj0U6QjmsTLlNwh4";
+  var btn = document.querySelector(".submit-btn");
+  if (!btn) { return; }
+
+  var note = document.createElement("div");
+  note.style.cssText = "margin-top:14px;padding:12px 14px;border-radius:8px;font-size:14px;display:none;border-left:4px solid";
+  btn.parentNode.insertBefore(note, btn.nextSibling);
+
+  function say(text, kind) {
+    note.style.display = "block";
+    note.style.background = kind === "bad" ? "#fdeeea" : (kind === "warn" ? "#fff7e8" : "#eef9f1");
+    note.style.borderColor = kind === "bad" ? "#EF462A" : (kind === "warn" ? "#F47721" : "#2CB34A");
+    note.textContent = text;
+  }
+  function digits(s) { return (s || "").replace(/[^0-9]/g, ""); }
+
+  btn.addEventListener("click", function () {
+    var first = document.getElementById("fname").value.trim();
+    var last = document.getElementById("lname").value.trim();
+    var phone = document.getElementById("phone").value.trim();
+    var consent = document.getElementById("consent").checked;
+
+    if (!first || !last) { say("Please enter your first and last name.", "warn"); return; }
+    var d = digits(phone);
+    if (d.length === 11 && d.charAt(0) === "1") { d = d.substring(1); }
+    if (d.length !== 10) { say("Please enter a 10-digit US mobile number.", "warn"); return; }
+    if (!consent) { say("Please tick the consent box so we know you agree.", "warn"); return; }
+
+    btn.disabled = true;
+    var original = btn.textContent;
+    btn.textContent = "Sending...";
+
+    fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ firstName: first, lastName: last, phone: d })
+    })
+      .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+      .then(function (data) {
+        say(data && data.message
+            ? data.message
+            : "Thank you. Your request has been sent to the Learning and Development team to confirm.", "ok");
+        btn.textContent = "Sent";
+      })
+      .catch(function () {
+        say("Sorry - that did not go through. Please email garciae@childrensguild.org, or text START to 888-287-1898 from your mobile.", "bad");
+        btn.disabled = false;
+        btn.textContent = original;
+      });
+  });
+})();
+</script>
 </body>
 </html>
